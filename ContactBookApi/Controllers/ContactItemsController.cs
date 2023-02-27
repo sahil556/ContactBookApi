@@ -24,12 +24,19 @@ namespace ContactBookApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ContactItem>>> GetContacts()
         {
+            using(_context)
+            {
+                return _context.Contacts
+                    .Include(contact => contact.Addresses)
+                    .Include(contact => contact.mobileNumbers)
+                    .ToList();
+            }
             return await _context.Contacts.ToListAsync();
         }
 
         // GET: api/ContactItems/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<ContactItem>> GetContactItem(long id)
+        public async Task<ActionResult<IEnumerable<ContactItem>>> GetContactItem(long id)
         {
             var contactItem = await _context.Contacts.FindAsync(id);
 
@@ -38,7 +45,11 @@ namespace ContactBookApi.Controllers
                 return NotFound();
             }
 
-            return contactItem;
+            return _context.Contacts
+                     .Where(contact => contact.Id == id)
+                     .Include(contact => contact.Addresses)
+                     .Include(contact => contact.mobileNumbers)
+                     .ToList();
         }
 
         // PUT: api/ContactItems/5
@@ -80,7 +91,7 @@ namespace ContactBookApi.Controllers
             _context.Contacts.Add(contactItem);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetContactItem), new { id = contactItem.Id }, contactItem);
+            return CreatedAtAction("GetContactItem", new { id = contactItem.Id }, contactItem);
         }
 
         // DELETE: api/ContactItems/5

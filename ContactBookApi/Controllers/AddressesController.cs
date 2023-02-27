@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ContactBookApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ContactBookApi.Controllers
 {
@@ -22,6 +23,7 @@ namespace ContactBookApi.Controllers
 
         // GET: api/Addresses
         [HttpGet]
+        
         public async Task<ActionResult<IEnumerable<Address>>> GetAddresses()
         {
             return await _context.Addresses.ToListAsync();
@@ -80,7 +82,7 @@ namespace ContactBookApi.Controllers
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetAddress), new { id = address.Id }, address);
+            return CreatedAtAction("GetAddress", new { id = address.Id }, address);
         }
 
         // DELETE: api/Addresses/5

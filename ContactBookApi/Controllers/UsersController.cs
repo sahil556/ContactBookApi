@@ -23,13 +23,23 @@ namespace ContactBookApi.Controllers
         // GET: api/Users
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        {
-            return await _context.Users.ToListAsync();
+        { 
+            using (_context)
+            {
+                return _context.Users
+                    .Include(user => user.contactItems)
+                    .ThenInclude(address => address.Addresses)
+                    .Include(user => user.contactItems)
+                    .ThenInclude(mobileno => mobileno.mobileNumbers)
+                    .ToList();
+            }
+
+
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<IEnumerable<User>>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -37,11 +47,17 @@ namespace ContactBookApi.Controllers
             {
                 return NotFound();
             }
-
-            return user;
+            return _context.Users
+                     .Where(a => a.UserId == id)
+                     .Include(user => user.contactItems)
+                     .ThenInclude(address => address.Addresses)
+                     .Include(user => user.contactItems)
+                     .ThenInclude(mobileno => mobileno.mobileNumbers)
+                     .ToList();
         }
 
         // PUT: api/Users/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, User user)
         {
@@ -72,13 +88,14 @@ namespace ContactBookApi.Controllers
         }
 
         // POST: api/Users
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUser), new { id = user.UserId }, user);
+            return CreatedAtAction("GetUser", new { id = user.UserId }, user);
         }
 
         // DELETE: api/Users/5
@@ -95,7 +112,7 @@ namespace ContactBookApi.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }   
+        }
 
         private bool UserExists(int id)
         {

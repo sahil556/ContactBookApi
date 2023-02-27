@@ -80,7 +80,7 @@ namespace ContactBookApi.Controllers
             _context.MobileNumber.Add(mobileNumber);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetMobileNumber), new { id = mobileNumber.Id }, mobileNumber);
+            return CreatedAtAction("GetMobileNumber", new { id = mobileNumber.Id }, mobileNumber);
         }
 
         // DELETE: api/MobileNumbers/5
