@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ContactBookApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AddressesController : ControllerBase

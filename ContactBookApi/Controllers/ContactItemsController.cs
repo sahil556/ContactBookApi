@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ContactBookApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace ContactBookApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ContactItemsController : ControllerBase
@@ -24,12 +27,14 @@ namespace ContactBookApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ContactItem>>> GetContacts()
         {
-            using(_context)
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            using (_context)
             {
-                return _context.Contacts
+                return Ok(_context.Contacts
+                    .Where(contact => contact.UserId == id)
                     .Include(contact => contact.Addresses)
                     .Include(contact => contact.mobileNumbers)
-                    .ToList();
+                    .ToList());
             }
             return await _context.Contacts.ToListAsync();
         }
@@ -44,12 +49,13 @@ namespace ContactBookApi.Controllers
             {
                 return NotFound();
             }
+            int userId = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-            return _context.Contacts
-                     .Where(contact => contact.Id == id)
+            return  Ok(_context.Contacts
+                     .Where(contact => contact.Id == id && contact.UserId == userId)
                      .Include(contact => contact.Addresses)
                      .Include(contact => contact.mobileNumbers)
-                     .ToList();
+                     .ToList());
         }
 
         // PUT: api/ContactItems/5
@@ -88,10 +94,18 @@ namespace ContactBookApi.Controllers
         [HttpPost]
         public async Task<ActionResult<ContactItem>> PostContactItem(ContactItem contactItem)
         {
-            _context.Contacts.Add(contactItem);
-            await _context.SaveChangesAsync();
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            if (id == contactItem.UserId)
+            {
+                _context.Contacts.Add(contactItem);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetContactItem", new { id = contactItem.Id }, contactItem);
+                return CreatedAtAction("GetContactItem", new { id = contactItem.Id }, contactItem);
+            }
+            else
+            {
+                return Unauthorized();
+            }
         }
 
         // DELETE: api/ContactItems/5

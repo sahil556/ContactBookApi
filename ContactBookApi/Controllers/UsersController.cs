@@ -6,9 +6,12 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ContactBookApi.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace ContactBookApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -21,28 +24,29 @@ namespace ContactBookApi.Controllers
         }
 
         // GET: api/Users
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        { 
-            using (_context)
-            {
-                return _context.Users
-                    .Include(user => user.contactItems)
-                    .ThenInclude(address => address.Addresses)
-                    .Include(user => user.contactItems)
-                    .ThenInclude(mobileno => mobileno.mobileNumbers)
-                    .ToList();
-            }
+        //[HttpGet]
+        //public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        //{ 
+        //    using (_context)
+        //    {
+        //        return _context.Users
+        //            .Include(user => user.contactItems)
+        //            .ThenInclude(address => address.Addresses)
+        //            .Include(user => user.contactItems)
+        //            .ThenInclude(mobileno => mobileno.mobileNumbers)
+        //            .ToList();
+        //    }
 
 
-        }
+        //}
 
         // GET: api/Users/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<User>>> GetUser(int id)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<User>>> GetUser()
         {
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             var user = await _context.Users.FindAsync(id);
-
+            Console.WriteLine("User id is :", id);
             if (user == null)
             {
                 return NotFound();
@@ -59,8 +63,9 @@ namespace ContactBookApi.Controllers
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(User user)
         {
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             if (id != user.UserId)
             {
                 return BadRequest();
@@ -99,9 +104,10 @@ namespace ContactBookApi.Controllers
         }
 
         // DELETE: api/Users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        [HttpDelete]
+        public async Task<IActionResult> DeleteUser()
         {
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
