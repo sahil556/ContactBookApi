@@ -94,18 +94,16 @@ namespace ContactBookApi.Controllers
         [HttpPost]
         public async Task<ActionResult<ContactItem>> PostContactItem(ContactItem contactItem)
         {
+            Console.WriteLine("printing details");
+            Console.WriteLine(contactItem);
+            Console.WriteLine(contactItem.mobileNumbers[0].Mobile);
             int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            if (id == contactItem.UserId)
-            {
+            contactItem.UserId = id;
+           
                 _context.Contacts.Add(contactItem);
                 await _context.SaveChangesAsync();
 
-                return CreatedAtAction("GetContactItem", new { id = contactItem.Id }, contactItem);
-            }
-            else
-            {
-                return Unauthorized();
-            }
+            return CreatedAtAction("GetContactItem", new { id = contactItem.Id }, contactItem);
         }
 
         // DELETE: api/ContactItems/5

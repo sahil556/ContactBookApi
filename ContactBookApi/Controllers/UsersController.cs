@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using ContactBookApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using AutoMapper;
 
 namespace ContactBookApi.Controllers
 {
@@ -17,32 +18,16 @@ namespace ContactBookApi.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ContactBookContext _context;
+        private readonly IMapper _mapper;
 
-        public UsersController(ContactBookContext context)
+        public UsersController(ContactBookContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
-        // GET: api/Users
-        //[HttpGet]
-        //public async Task<ActionResult<IEnumerable<User>>> GetUsers()
-        //{ 
-        //    using (_context)
-        //    {
-        //        return _context.Users
-        //            .Include(user => user.contactItems)
-        //            .ThenInclude(address => address.Addresses)
-        //            .Include(user => user.contactItems)
-        //            .ThenInclude(mobileno => mobileno.mobileNumbers)
-        //            .ToList();
-        //    }
-
-
-        //}
-
-        // GET: api/Users/5
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUser()
+        [HttpGet, Route("onlyprofile")]
+        public async Task<ActionResult<IEnumerable<ProfileDTO>>> GetOnlyUser()
         {
             int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
             var user = await _context.Users.FindAsync(id);
@@ -51,6 +36,24 @@ namespace ContactBookApi.Controllers
             {
                 return NotFound();
             }
+
+            return Ok(_mapper.Map<ProfileDTO>((User)await _context.Users
+                   .FindAsync(id)));
+        }
+
+        // GET:         
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<User>>> GetUser()
+        { 
+            int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var user = await _context.Users.FindAsync(id);
+            Console.WriteLine("User id is :", id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+          
+
             return _context.Users
                      .Where(a => a.UserId == id)
                      .Include(user => user.contactItems)
@@ -62,14 +65,18 @@ namespace ContactBookApi.Controllers
 
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(User user)
+        [HttpPut]
+        public async Task<IActionResult> PutUser(ProfileDTO profile)
         {
             int id = Int32.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-            if (id != user.UserId)
+            
+            if (id != profile.UserId)
             {
                 return BadRequest();
             }
+            User user = await _context.Users.FindAsync(id);
+
+            _mapper.Map<ProfileDTO, User>(profile, user);   
 
             _context.Entry(user).State = EntityState.Modified;
 

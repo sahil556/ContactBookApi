@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using ContactBookApi.Data;
 using Swashbuckle.AspNetCore.Filters;
-
+using AutoMapper;
 
 var MyAllowSpecificOrigins = "MyAllowedOrigins";
 
@@ -33,6 +33,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ContactBookContext>(opt =>
     opt.UseSqlServer("ContactBookDB"));
+builder.Services.AddAutoMapper(typeof(ContactBookProfile)); 
 
 builder.Services.AddTransient<IAuthRepo, AuthRepo>();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
