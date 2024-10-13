@@ -32,7 +32,17 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<ContactBookContext>(opt =>
-    opt.UseSqlServer("ContactBookDB"));
+{
+    var connectionString = builder.Configuration.GetConnectionString("Database");
+    opt.UseSqlServer(connectionString, sqloptions =>
+    {
+        sqloptions.EnableRetryOnFailure(3);
+        sqloptions.CommandTimeout(30);
+    });
+
+    opt.EnableDetailedErrors(true);
+    opt.EnableSensitiveDataLogging(true); // be careful, make it is in development environment only, it may lead to leak sensitive information 
+});
 builder.Services.AddAutoMapper(typeof(ContactBookProfile)); 
 
 builder.Services.AddTransient<IAuthRepo, AuthRepo>();
