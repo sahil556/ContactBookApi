@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using ContactBookApi.Data;
 using Swashbuckle.AspNetCore.Filters;
 using AutoMapper;
+using ContactBookApi.Options;
+using Microsoft.Extensions.Options;
 
 var MyAllowSpecificOrigins = "MyAllowedOrigins";
 
@@ -17,6 +19,7 @@ var configuration = builder.Configuration;
 
 // Add services to the container.
 
+builder.Services.ConfigureOptions<DatabaseOptionsSetup>();
 
 //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
@@ -31,18 +34,22 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddControllers();
-builder.Services.AddDbContext<ContactBookContext>(opt =>
+builder.Services.AddDbContext<ContactBookContext>(
+    (services, opt) =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("Database");
-    opt.UseSqlServer(connectionString, sqloptions =>
+    var databaseOptions = services.GetService<IOptions<DatabaseOptions>>()!.Value;
+
+    opt.UseSqlServer(databaseOptions.ConnectionString, sqloptions =>
     {
-        sqloptions.EnableRetryOnFailure(3);
-        sqloptions.CommandTimeout(30);
+        sqloptions.EnableRetryOnFailure(databaseOptions.MaxRetryCount);
+        sqloptions.CommandTimeout(databaseOptions.CommandTimeout);
     });
 
-    opt.EnableDetailedErrors(true);
-    opt.EnableSensitiveDataLogging(true); // be careful, make it is in development environment only, it may lead to leak sensitive information 
+    opt.EnableDetailedErrors(databaseOptions.EnableDetailedErrors);
+    opt.EnableSensitiveDataLogging(databaseOptions.EnableSensitiveDataLogging); // be careful, make it is in development environment only, it may lead to leak sensitive information 
 });
+
+
 builder.Services.AddAutoMapper(typeof(ContactBookProfile)); 
 
 builder.Services.AddTransient<IAuthRepo, AuthRepo>();
